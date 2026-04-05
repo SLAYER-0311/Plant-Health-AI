@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+/* Custom styles for PlantHealth AI */
+body {
+  @apply bg-gradient-to-br from-green-100 via-yellow-50 to-emerald-200 dark:from-green-800 dark:via-gray-900 dark:to-green-900 bg-fixed min-h-screen;
+}
+
+/* Drag and drop zone styling */
+.dropzone {
+  @apply border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl p-8 transition-all duration-200;
+}
+
+.dropzone:hover,
+.dropzone.active {
+  @apply border-green-500 bg-green-50 dark:bg-green-900/20;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-gray-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400 dark:bg-gray-500;
+}

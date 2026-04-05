@@ -1,0 +1,140 @@
+# =========================
+# PlantHealth AI - Configuration
+# =========================
+
+# ----- Paths -----
+paths:
+  data_dir: "data/New Plant Diseases Dataset"
+  train_dir: "data/New Plant Diseases Dataset/train"
+  valid_dir: "data/New Plant Diseases Dataset/valid"
+  test_dir: "data/New Plant Diseases Dataset/test"
+  model_dir: "backend/models"
+  checkpoint_dir: "checkpoints"
+
+# ----- Model -----
+model:
+  num_classes: 38
+  image_size: 224
+  pretrained_model: "resnet50"  # Options: resnet50, resnet34, mobilenet_v2
+
+# ----- Training -----
+training:
+  batch_size: 32
+  num_workers: 4
+  pin_memory: true
+  
+  # Custom CNN
+  custom_cnn:
+    epochs: 30
+    learning_rate: 0.001
+    weight_decay: 0.0001
+  
+  # Transfer Learning
+  transfer_learning:
+    stage1:
+      epochs: 5
+      learning_rate: 0.001
+      freeze_backbone: true
+    stage2:
+      epochs: 15
+      learning_rate: 0.00001
+      unfreeze_layers: 2  # Unfreeze last N layer groups
+
+# ----- Optimizer -----
+optimizer:
+  name: "adamw"  # Options: adam, adamw, sgd
+  betas: [0.9, 0.999]
+  momentum: 0.9  # For SGD
+
+# ----- Scheduler -----
+scheduler:
+  name: "reduce_on_plateau"  # Options: reduce_on_plateau, cosine, step
+  factor: 0.1
+  patience: 3
+  min_lr: 0.000001
+
+# ----- Callbacks -----
+callbacks:
+  early_stopping:
+    patience: 5
+    min_delta: 0.001
+    monitor: "val_loss"  # Options: val_loss, val_accuracy
+  checkpoint:
+    monitor: "val_accuracy"
+    save_top_k: 1
+
+# ----- Regularization -----
+regularization:
+  dropout: 0.5
+  label_smoothing: 0.1
+
+# ----- Data Augmentation -----
+augmentation:
+  # Training augmentations
+  train:
+    horizontal_flip: 0.5
+    vertical_flip: 0.0
+    rotation_limit: 15
+    brightness_limit: 0.2
+    contrast_limit: 0.2
+    hue_shift_limit: 10
+    saturation_limit: 20
+    blur_limit: 3
+    noise_var_limit: [10, 50]
+  
+  # Validation/Test - only resize and normalize
+  normalize:
+    mean: [0.485, 0.456, 0.406]  # ImageNet mean
+    std: [0.229, 0.224, 0.225]   # ImageNet std
+
+# ----- Device -----
+device: "auto"  # Options: auto, cuda, cpu, mps
+
+# ----- Seed -----
+seed: 42
+
+# ----- Logging -----
+logging:
+  level: "INFO"
+  save_frequency: 1  # Save metrics every N epochs
+
+# ----- Class Names -----
+class_names:
+  - "Apple___Apple_scab"
+  - "Apple___Black_rot"
+  - "Apple___Cedar_apple_rust"
+  - "Apple___healthy"
+  - "Blueberry___healthy"
+  - "Cherry_(including_sour)___Powdery_mildew"
+  - "Cherry_(including_sour)___healthy"
+  - "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot"
+  - "Corn_(maize)___Common_rust_"
+  - "Corn_(maize)___Northern_Leaf_Blight"
+  - "Corn_(maize)___healthy"
+  - "Grape___Black_rot"
+  - "Grape___Esca_(Black_Measles)"
+  - "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)"
+  - "Grape___healthy"
+  - "Orange___Haunglongbing_(Citrus_greening)"
+  - "Peach___Bacterial_spot"
+  - "Peach___healthy"
+  - "Pepper,_bell___Bacterial_spot"
+  - "Pepper,_bell___healthy"
+  - "Potato___Early_blight"
+  - "Potato___Late_blight"
+  - "Potato___healthy"
+  - "Raspberry___healthy"
+  - "Soybean___healthy"
+  - "Squash___Powdery_mildew"
+  - "Strawberry___Leaf_scorch"
+  - "Strawberry___healthy"
+  - "Tomato___Bacterial_spot"
+  - "Tomato___Early_blight"
+  - "Tomato___Late_blight"
+  - "Tomato___Leaf_Mold"
+  - "Tomato___Septoria_leaf_spot"
+  - "Tomato___Spider_mites Two-spotted_spider_mite"
+  - "Tomato___Target_Spot"
+  - "Tomato___Tomato_Yellow_Leaf_Curl_Virus"
+  - "Tomato___Tomato_mosaic_virus"
+  - "Tomato___healthy"

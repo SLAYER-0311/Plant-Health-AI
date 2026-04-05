@@ -1,0 +1,3 @@
+"""
+PlantHealth AI Backend Application
+"""

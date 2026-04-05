@@ -1,0 +1,11 @@
+{
+  "model": "Custom CNN",
+  "accuracy": 97.71624322009706,
+  "top5_accuracy": 99.97145304025122,
+  "macro_precision": 0.9778817279021332,
+  "macro_recall": 0.9768319754924598,
+  "macro_f1": 0.9769214386801878,
+  "weighted_precision": 0.9777586697656601,
+  "weighted_recall": 0.9771624322009705,
+  "weighted_f1": 0.977032600803263
+}

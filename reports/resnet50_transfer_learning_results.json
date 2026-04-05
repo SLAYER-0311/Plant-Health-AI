@@ -1,0 +1,11 @@
+{
+  "model": "ResNet50 Transfer Learning",
+  "accuracy": 99.77162432200971,
+  "top5_accuracy": 100.0,
+  "macro_precision": 0.9976893435528056,
+  "macro_recall": 0.997608628989314,
+  "macro_f1": 0.9976443210937299,
+  "weighted_precision": 0.9977213539420494,
+  "weighted_recall": 0.9977162432200971,
+  "weighted_f1": 0.9977141762177723
+}

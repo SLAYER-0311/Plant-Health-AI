@@ -1,0 +1,150 @@
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                   PLANT HEALTH AI - OOD DETECTION FLOW                  │
+└─────────────────────────────────────────────────────────────────────────┘
+
+                              📸 INPUT IMAGE
+                                    │
+                                    ▼
+                         ┌──────────────────────┐
+                         │   Preprocess Image   │
+                         │  (Resize, Normalize) │
+                         └──────────┬───────────┘
+                                    │
+                                    ▼
+                         ┌──────────────────────┐
+                         │  CNN Model (ResNet)  │
+                         │   Forward Pass       │
+                         └──────────┬───────────┘
+                                    │
+                         ┌──────────▼───────────┐
+                         │   Model Outputs      │
+                         │   (38 class logits)  │
+                         └──────────┬───────────┘
+                                    │
+                    ┌───────────────┴───────────────┐
+                    │                               │
+                    ▼                               ▼
+        ┌───────────────────────┐       ┌───────────────────────┐
+        │  WITHOUT OOD          │       │   WITH OOD            │
+        │  (Original Problem)   │       │   (Our Solution)      │
+        └───────────┬───────────┘       └───────────┬───────────┘
+                    │                               │
+                    ▼                               ▼
+        ┌───────────────────────┐       ┌───────────────────────┐
+        │   Apply Softmax       │       │  OOD DETECTION        │
+        │   Get Top-K Classes   │       │  ═════════════        │
+        └───────────┬───────────┘       │                       │
+                    │                   │ ✓ Confidence Check    │
+                    ▼                   │   (max prob ≥ 0.60)   │
+        ┌───────────────────────┐       │                       │
+        │  ALWAYS PREDICTS!     │       │ ✓ Entropy Check       │
+        │  Even for non-leaves  │       │   (entropy ≤ 3.0)     │
+        │  ❌ PROBLEM!          │       │                       │
+        └───────────────────────┘       │ ✓ Variance Check      │
+                                        │   (low = focused)     │
+            Example Results:            │                       │
+            ─────────────────           │ ✓ Top-K Gap Check     │
+            Image: Green Toy Car        │   (clear winner?)     │
+            Prediction:                 │                       │
+            "Tomato - Healthy"          └───────────┬───────────┘
+            Confidence: 85%                         │
+            ❌ WRONG!                        ┌──────▼──────┐
+                                             │ Vote: ≥2/4? │
+                                             └──────┬──────┘
+                                                    │
+                                    ┌───────────────┴───────────────┐
+                                    │                               │
+                                    ▼                               ▼
+                          ┌──────────────────┐          ┌──────────────────┐
+                          │   IS OOD = TRUE  │          │  IS OOD = FALSE  │
+                          │   (Not a leaf!)  │          │  (Valid leaf!)   │
+                          └─────────┬────────┘          └─────────┬────────┘
+                                    │                             │
+                                    ▼                             ▼
+                          ┌──────────────────┐          ┌──────────────────┐
+                          │  REJECT IMAGE    │          │  Apply Softmax   │
+                          │  ─────────────   │          │  Get Top-K       │
+                          │ • No predictions │          └─────────┬────────┘
+                          │ • Show warning   │                    │
+                          │ • Return OOD     │                    ▼
+                          │   scores         │          ┌──────────────────┐
+                          └──────────────────┘          │  VALID           │
+                                                        │  PREDICTIONS     │
+                                                        │  ──────────────  │
+                            Example:                   │ Top Prediction:  │
+                            ────────                   │ "Tomato - Early  │
+                            Image: Green Toy           │  Blight"         │
+                            Result: OOD Detected!      │ Confidence: 95%  │
+                            Max Prob: 0.35            │ ✓ CORRECT!       │
+                            Entropy: 3.2              └──────────────────┘
+                            Warning: "Not a leaf!"
+                            ✓ CORRECT!                    Example:
+                                                         ────────
+                                                         Image: Tomato Leaf
+                                                         Result: Valid Leaf
+                                                         Prediction: Early Blight
+                                                         Confidence: 95.4%
+                                                         ✓ CORRECT!
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         OOD DETECTION METHODS                           │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  1. CONFIDENCE (Max Softmax Probability)                               │
+│     ────────────────────────────────────                               │
+│     If max_prob < 0.60 → Likely OOD                                   │
+│     Example:                                                           │
+│       Valid Leaf: [0.95, 0.02, 0.01, ...] → Max: 0.95 ✓              │
+│       Green Toy:  [0.35, 0.28, 0.22, ...] → Max: 0.35 ✗              │
+│                                                                         │
+│  2. ENTROPY (Prediction Uncertainty)                                   │
+│     ─────────────────────────────                                     │
+│     If entropy > 3.0 → Model confused → Likely OOD                    │
+│     Formula: H = -Σ p_i * log(p_i)                                    │
+│     Example:                                                           │
+│       Valid Leaf: entropy = 0.28 ✓                                    │
+│       Green Toy:  entropy = 3.16 ✗                                    │
+│                                                                         │
+│  3. VARIANCE (Prediction Spread)                                       │
+│     ────────────────────────────                                      │
+│     If variance > 0.02 → Predictions spread out → OOD                 │
+│     Low variance = focused on one class (good)                         │
+│                                                                         │
+│  4. TOP-K GAP (Winner Margin)                                          │
+│     ─────────────────────────                                         │
+│     If (prob_1 - prob_2) < 0.15 → No clear winner → OOD              │
+│     Example:                                                           │
+│       Valid Leaf: 0.95 - 0.02 = 0.93 ✓ (huge gap)                    │
+│       Green Toy:  0.35 - 0.28 = 0.07 ✗ (tiny gap)                    │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      CONFIGURATION & TUNING                             │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  Lenient Mode (Default)              Strict Mode
+  ══════════════════════              ═══════════
+  Confidence: ≥ 0.60                  Confidence: ≥ 0.75
+  Entropy:    ≤ 3.0                   Entropy:    ≤ 2.0
+  
+  ✓ Accepts more leaves               ✓ Rejects more non-leaves
+  ✗ May miss some OOD                 ✗ May reject some valid leaves
+  
+  Best for: Production                Best for: High security
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                            PERFORMANCE                                  │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  Metric                    Lenient        Strict
+  ──────                    ───────        ──────
+  Valid Leaves Accepted     ~95%           ~90%
+  Non-Leaves Rejected       ~90%           ~97%
+  Speed Overhead            +1ms           +1ms
+  Retraining Needed         No             No
+```

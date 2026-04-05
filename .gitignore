@@ -1,0 +1,70 @@
+# Virtual environments
+.venv*/
+venv/
+plant-health-env/
+*.exe
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Dataset (too large for GitHub)
+data/
+
+# Model checkpoints (large binary files)
+checkpoints/
+backend/models/*.pth
+models/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment
+.env
+*.log
+
+# Build artifacts
+frontend/dist/
+frontend/build/
+frontend/node_modules/
+node_modules/
+
+# Debug / test scripts
+check_checkpoint.py
+debug_*.py
+demo_*.py
+deploy_to_hf.py
+kaggle.py
+setup_kaggle.py
+train.py
+test_*.py
+test_*.png
+*_backup.*
+
+# Old duplicate notebooks
+notebooks/01_Data_Exploration.ipynb
+notebooks/02_Custom_CNN.ipynb
+notebooks/03_Transfer_Learning.ipynb
+
+# Old report artifacts (replaced by reports/figures/)
+reports/custom_cnn_confusion.png
+reports/custom_cnn_training.png
+reports/resnet50_confusion.png
+reports/resnet50_training.png
+reports/training_summary.txt
+
+# Misc
+PlantHealth_AI/
