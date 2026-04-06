@@ -20,6 +20,12 @@ import torch.nn as nn
 import numpy as np
 from PIL import Image
 
+try:
+    from huggingface_hub import hf_hub_download
+    HF_HUB_AVAILABLE = True
+except ImportError:
+    HF_HUB_AVAILABLE = False
+
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -35,6 +41,30 @@ MODEL_PATH = PROJECT_ROOT / "backend" / "models" / "plant_disease_model.pth"
 CLASS_NAMES_PATH = PROJECT_ROOT / "backend" / "models" / "class_names.json"
 CHECKPOINT_PATH = PROJECT_ROOT / "checkpoints" / "resnet50_best.pth"
 IMAGE_SIZE = 224
+
+# Hugging Face Hub model repo (hosts the trained .pth weights)
+HF_MODEL_REPO = "jsohamg/plant-health-ai-model"
+
+
+def _download_from_hf(filename: str, local_path: Path) -> bool:
+    """Download a file from HF Hub if not found locally."""
+    if not HF_HUB_AVAILABLE:
+        return False
+    try:
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        downloaded = hf_hub_download(
+            repo_id=HF_MODEL_REPO,
+            filename=filename,
+            repo_type="model",
+            local_dir=str(local_path.parent),
+        )
+        # hf_hub_download may save with a different name; rename if needed
+        downloaded_path = Path(downloaded)
+        if downloaded_path != local_path and downloaded_path.exists():
+            downloaded_path.rename(local_path)
+        return local_path.exists()
+    except Exception as e:
+        return False
 
 # ImageNet normalization
 IMAGENET_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
@@ -71,28 +101,40 @@ TREATMENT_TIPS = {
 # ============================
 @st.cache_resource
 def load_model():
-    """Load the trained model and class names."""
+    """Load the trained model and class names, downloading from HF Hub if needed."""
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
-    # Load class names
+
+    # ---- Class names ----
+    if not CLASS_NAMES_PATH.exists():
+        with st.spinner("📥 Downloading class names..."):
+            _download_from_hf("class_names.json", CLASS_NAMES_PATH)
+
     if CLASS_NAMES_PATH.exists():
         with open(CLASS_NAMES_PATH, 'r') as f:
             data = json.load(f)
             class_names = data if isinstance(data, list) else data.get('class_names', [])
     else:
         class_names = get_default_class_names()
-    
+
     num_classes = len(class_names)
-    
-    # Create model
+
+    # ---- Model weights ----
+    # Download from HF Hub if not found locally
+    if not MODEL_PATH.exists() and not CHECKPOINT_PATH.exists():
+        with st.spinner("📥 Downloading model weights from Hugging Face (~94 MB, first run only)..."):
+            success = _download_from_hf("plant_disease_model.pth", MODEL_PATH)
+            if not success:
+                st.warning("⚠️ Could not download model. Predictions will be random.")
+
+    # Create model architecture
     model = PlantDiseaseResNet(
         num_classes=num_classes,
         dropout_rate=0.5,
         pretrained=False,
         freeze_backbone=False,
     )
-    
-    # Try loading model weights from multiple locations
+
+    # Load weights
     model_loaded = False
     for path in [MODEL_PATH, CHECKPOINT_PATH]:
         if path.exists():
@@ -104,18 +146,18 @@ def load_model():
                     model.load_state_dict(checkpoint)
                 model_loaded = True
                 break
-            except Exception as e:
+            except Exception:
                 continue
-    
+
     if not model_loaded:
-        st.warning("⚠️ No trained model found. Predictions will be random. Train a model first.")
-    
+        st.warning("⚠️ No trained model found. Predictions will be random.")
+
     model.to(device)
     model.eval()
-    
+
     # OOD detector
     ood_detector = create_default_detector(strict=True)
-    
+
     return model, class_names, device, ood_detector
 
 

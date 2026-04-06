@@ -2,6 +2,12 @@
 # PlantHealth AI - Dependencies
 # =========================
 
+# ----- Web App (Streamlit Demo) -----
+streamlit>=1.28.0
+
+# ----- Model hosting / download -----
+huggingface_hub>=0.20.0
+
 # ----- Deep Learning -----
 torch>=2.0.0
 torchvision>=0.15.0
