@@ -11,12 +11,12 @@ __pycache__/
 *.pyo
 
 # Dataset (too large for GitHub)
-data/
+/data/
 
 # Model checkpoints (large binary files)
 checkpoints/
 backend/models/*.pth
-models/
+/models/
 
 # IDE
 .vscode/

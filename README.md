@@ -205,3 +205,18 @@ Apple, Blueberry, Cherry, Corn, Grape, Orange, Peach, Pepper, Potato, Raspberry,
 
 ### OOD Detection:
 The model includes Out-of-Distribution detection to reject non-leaf images like cloth, solid colors, or random objects. It will also warn you if you upload unsupported plant species (e.g., banana, mango).
+
+
+Frontend commands:
+
+cd frontend
+npm install
+npm run build
+cd ..
+.\plant-health-env\Scripts\streamlit.exe run streamlit_app.py
+
+Backend commands:
+python app.py
+.\plant-health-env\Scripts\python.exe app.py
+
+
